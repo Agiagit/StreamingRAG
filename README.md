@@ -1,9 +1,6 @@
 # StreamingRAG
+
 A live, predictive retrieval system based on RAG: as the user types, the system continuously searches the document collection and, once it is confident enough, answers before the user finishes.
-
-# Streaming RAG
-
-A live, predictive retrieval system. As the user types, it continuously searches a document collection and, once it is confident enough about what is being asked, generates an answer before the user presses Enter. Typing more interrupts the answer and resumes the search.
 
 This is a group final project for our Machine Learning course. It builds on our earlier work: a small GPT trained from scratch and a basic Retrieval-Augmented Generation (RAG) prototype.
 
