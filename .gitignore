@@ -1,0 +1,52 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Environment variables and secrets ---
+# No API key in this project today, but this keeps a future .env from ever
+# being committed by accident.
+.env
+.env.*
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Testing and coverage ---
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Model files and caches ---
+# Models download to a cache outside the repo by default. These patterns are a
+# safety net so a large model file can never be committed by accident.
+.cache/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+
+# --- IDE and editor ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Note: data/corpus.json is intentionally NOT ignored. It is project data that
+# the backend needs to run, so it should be committed.

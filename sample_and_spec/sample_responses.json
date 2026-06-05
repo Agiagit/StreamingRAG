@@ -1,0 +1,53 @@
+{
+  "_comment": "Mock API responses for frontend development. Matches the API contract in the spec (sections 1.4 and 1.5). The frontend can load this file and use each key to test a different on-screen state without a running backend. Note that retrieve_commit deliberately contains two chunks from 'Venues of the 2024 Summer Olympics' and two from '2024 Summer Olympics' so you can test collapsing results by parent_title.",
+
+  "retrieve_wait": {
+    "query": "where",
+    "results": [
+      { "doc_id": "doc_003_c1", "title": "2024 Summer Olympics (part 1)", "parent_title": "2024 Summer Olympics", "score": 0.33, "snippet": "The 2024 Summer Olympics, officially the Games of the XXXIII Olympiad, was an international multi-sport event..." },
+      { "doc_id": "doc_055_c1", "title": "Venues of the 2024 Summer Olympics (part 1)", "parent_title": "Venues of the 2024 Summer Olympics", "score": 0.30, "snippet": "The 2024 Summer Olympics used a mix of existing, historic, and temporary venues across the Paris region..." },
+      { "doc_id": "doc_012_c2", "title": "France at the 2024 Summer Olympics (part 2)", "parent_title": "France at the 2024 Summer Olympics", "score": 0.28, "snippet": "As the host nation, France fielded athletes across nearly all sports on the programme..." },
+      { "doc_id": "doc_087_c1", "title": "Opening ceremony of the 2024 Summer Olympics (part 1)", "parent_title": "Opening ceremony of the 2024 Summer Olympics", "score": 0.27, "snippet": "The opening ceremony took place along the Seine on 26 July 2024, the first held outside a stadium..." }
+    ],
+    "top1_score": 0.33,
+    "top2_score": 0.30,
+    "confidence": 0.19,
+    "decision": "WAIT"
+  },
+
+  "retrieve_suggest": {
+    "query": "where were the 2024",
+    "results": [
+      { "doc_id": "doc_003_c1", "title": "2024 Summer Olympics (part 1)", "parent_title": "2024 Summer Olympics", "score": 0.49, "snippet": "The 2024 Summer Olympics, officially the Games of the XXXIII Olympiad, was an international multi-sport event held in..." },
+      { "doc_id": "doc_055_c1", "title": "Venues of the 2024 Summer Olympics (part 1)", "parent_title": "Venues of the 2024 Summer Olympics", "score": 0.41, "snippet": "The 2024 Summer Olympics used a mix of existing, historic, and temporary venues across the Paris region..." },
+      { "doc_id": "doc_003_c2", "title": "2024 Summer Olympics (part 2)", "parent_title": "2024 Summer Olympics", "score": 0.38, "snippet": "Paris was awarded the Games at the 2017 IOC session in Lima, alongside Los Angeles for 2028..." },
+      { "doc_id": "doc_012_c1", "title": "France at the 2024 Summer Olympics (part 1)", "parent_title": "France at the 2024 Summer Olympics", "score": 0.35, "snippet": "France competed as the host nation at the 2024 Summer Olympics..." }
+    ],
+    "top1_score": 0.49,
+    "top2_score": 0.41,
+    "confidence": 0.52,
+    "decision": "SUGGEST"
+  },
+
+  "retrieve_commit": {
+    "query": "where were the 2024 summer olympics held",
+    "results": [
+      { "doc_id": "doc_003_c1", "title": "2024 Summer Olympics (part 1)", "parent_title": "2024 Summer Olympics", "score": 0.84, "snippet": "The 2024 Summer Olympics was held in Paris, France, from 26 July to 11 August 2024..." },
+      { "doc_id": "doc_055_c1", "title": "Venues of the 2024 Summer Olympics (part 1)", "parent_title": "Venues of the 2024 Summer Olympics", "score": 0.71, "snippet": "Most venues were spread across the Paris region, grouped into the Paris Centre, Grand Paris, and Versailles clusters..." },
+      { "doc_id": "doc_055_c2", "title": "Venues of the 2024 Summer Olympics (part 2)", "parent_title": "Venues of the 2024 Summer Olympics", "score": 0.66, "snippet": "The surfing competition was held in Teahupo'o, Tahiti, while several football matches took place in other French cities..." },
+      { "doc_id": "doc_003_c2", "title": "2024 Summer Olympics (part 2)", "parent_title": "2024 Summer Olympics", "score": 0.63, "snippet": "Paris was awarded the Games at the 2017 IOC session in Lima..." }
+    ],
+    "top1_score": 0.84,
+    "top2_score": 0.71,
+    "confidence": 0.86,
+    "decision": "COMMIT"
+  },
+
+  "answer": {
+    "answer": "The 2024 Summer Olympics were held in Paris, France, from 26 July to 11 August 2024. Most events took place in and around Paris, with some football matches played in other French cities and the surfing competition held in Teahupo'o, Tahiti.",
+    "sources": [
+      { "doc_id": "doc_003_c1", "title": "2024 Summer Olympics (part 1)" },
+      { "doc_id": "doc_055_c2", "title": "Venues of the 2024 Summer Olympics (part 2)" }
+    ]
+  }
+}

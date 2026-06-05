@@ -1,0 +1,24 @@
+# Streaming RAG - shared dependencies
+# Python: 3.12 (most mature version with fully supported torch/transformers wheels;
+# create this project's venv on 3.12 even if another env on your machine is newer)
+
+# --- Web backend ---
+fastapi>=0.110
+uvicorn[standard]>=0.30
+
+# --- Embeddings and retrieval (runs on CPU) ---
+# sentence-transformers provides all-MiniLM-L6-v2 and pulls in torch and
+# transformers automatically.
+sentence-transformers>=3.0
+numpy>=1.26
+
+# --- Local answer generation ---
+# transformers and torch already arrive with sentence-transformers above.
+# They are listed explicitly here because the generator depends on them directly.
+# accelerate helps place the generator model on the GPU (your A4000).
+transformers>=4.44
+accelerate>=0.33
+
+# If you instead run the generator through Ollama (separate install, not pip),
+# you do not need transformers/accelerate for generation; you would call the
+# local Ollama endpoint from the backend. Decide this before WP1 starts.

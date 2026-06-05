@@ -48,7 +48,7 @@ The project is split into four parts that can be developed in parallel against a
 
 ## Documentation
 
-The full specification, including the corpus format, the API contract between frontend and backend, and the detailed requirements and definition of done for each work package, is in `streaming_rag_spec.md`. Mock API responses for frontend development without a running backend are in `sample_responses.json`.
+The full specification, including the corpus format, the API contract between frontend and backend, and the detailed requirements and definition of done for each work package, is in `sample_and_spec/streaming_rag_spec.md`. Mock API responses for frontend development without a running backend are in `sample_and_spec/sample_responses.json`.
 
 ## Status
 
