@@ -6,19 +6,25 @@
 fastapi>=0.110
 uvicorn[standard]>=0.30
 
-# --- Embeddings and retrieval (runs on CPU) ---
-# sentence-transformers provides all-MiniLM-L6-v2 and pulls in torch and
-# transformers automatically.
+# --- Embeddings and retrieval ---
+# sentence-transformers provides all-MiniLM-L6-v2.
 sentence-transformers>=3.0
 numpy>=1.26
 
 # --- Local answer generation ---
-# transformers and torch already arrive with sentence-transformers above.
-# They are listed explicitly here because the generator depends on them directly.
-# accelerate helps place the generator model on the GPU (your A4000).
 transformers>=4.44
 accelerate>=0.33
 
-# If you instead run the generator through Ollama (separate install, not pip),
-# you do not need transformers/accelerate for generation; you would call the
-# local Ollama endpoint from the backend. Decide this before WP1 starts.
+# --- PyTorch ---
+# Pinned to a fixed VERSION but not a build, so the whole team gets the same torch
+# that transformers was tested against (this is what prevents the import break we hit).
+# A plain install of this line gives the portable CPU build, which runs on any machine
+# with no GPU required.
+# Optional GPU acceleration: reinstall this SAME version from the matching CUDA index
+# (see the README). Keeping the version identical preserves transformers compatibility;
+# only the CPU-vs-CUDA build changes.
+torch==2.12.0
+
+# If you run generation through Ollama instead (separate install, not pip), you do not
+# need transformers/accelerate/torch for generation; you would call the local Ollama
+# endpoint from the backend.
