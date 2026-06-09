@@ -16,8 +16,6 @@ transformers>=4.44
 accelerate>=0.33
 
 # --- PyTorch ---
-# Pinned to a fixed VERSION but not a build, so the whole team gets the same torch
-# that transformers was tested against (this is what prevents the import break we hit).
 # A plain install of this line gives the portable CPU build, which runs on any machine
 # with no GPU required.
 # Optional GPU acceleration: reinstall this SAME version from the matching CUDA index
