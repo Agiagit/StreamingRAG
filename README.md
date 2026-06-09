@@ -50,6 +50,57 @@ The project is split into four parts that can be developed in parallel against a
 
 The full specification, including the corpus format, the API contract between frontend and backend, and the detailed requirements and definition of done for each work package, is in `sample_and_spec/streaming_rag_spec.md`. Mock API responses for frontend development without a running backend are in `sample_and_spec/sample_responses.json`.
 
+## How to run
+
+Requires Python 3.12.
+
+```
+# 1. Create and activate a virtual environment (Windows shown)
+python -m venv .venv
+.venv\Scripts\activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Start the server from the repo root
+uvicorn backend.main:app
+```
+
+The first start downloads the two models from Hugging Face (a few hundred MB); after that everything runs locally and offline. When startup finishes, the log shows which corpus file was loaded and how many entries it contains.
+
+Open `http://127.0.0.1:8000` for the developer test page: type a question about the 2024 Olympics, watch the live results and confidence, and on `COMMIT` the locally generated answer appears.
+
+### Corpus selection
+
+The backend defaults to the bundled sample corpus at `data/sample_corpus.json`. To use a different corpus, either set the `CORPUS_PATH` environment variable or change the default in `backend/retrieval.py`:
+
+```
+set CORPUS_PATH=data/corpus.json   # Windows
+uvicorn backend.main:app
+```
+
+### Tuning the commit decision
+
+All confidence weights and WAIT/SUGGEST/COMMIT thresholds live in one place: the constants at the top of `backend/confidence.py`.
+
 ## Status
 
-Early development. Setup and run instructions will be added here once the backend skeleton is in place.
+Backend (work package 1) implemented, including the sample corpus and a developer test page. Corpus pipeline, evaluation and the real frontend are in progress.
+
+## Optional: GPU acceleration (NVIDIA)
+
+The backend runs on CPU by default, which works on any machine. If you have an
+NVIDIA GPU, answer generation is much faster with a CUDA build of torch:
+
+1. Get the CUDA index URL for your setup from https://pytorch.org/get-started/locally
+2. Reinstall the SAME torch version with the CUDA build, forcing the swap:
+
+       uv pip install torch --index-url <cuda-index-url> --reinstall-package torch
+
+3. Verify:
+
+       python -c "import torch; print(torch.cuda.is_available())"   # expect True
+       python -c "import backend.main"                              # expect no error
+
+The startup log will then show the generation model on `cuda`. This is optional
+and not required to run or develop the project.
