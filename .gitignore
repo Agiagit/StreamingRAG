@@ -50,3 +50,5 @@ Desktop.ini
 
 # Note: data/corpus.json is intentionally NOT ignored. It is project data that
 # the backend needs to run, so it should be committed.
+BACKEND_SPEC.md
+CLAUDE.md
