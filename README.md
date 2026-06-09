@@ -53,3 +53,21 @@ The full specification, including the corpus format, the API contract between fr
 ## Status
 
 Early development. Setup and run instructions will be added here once the backend skeleton is in place.
+
+## Optional: GPU acceleration (NVIDIA)
+
+The backend runs on CPU by default, which works on any machine. If you have an
+NVIDIA GPU, answer generation is much faster with a CUDA build of torch:
+
+1. Get the CUDA index URL for your setup from https://pytorch.org/get-started/locally
+2. Reinstall the SAME torch version with the CUDA build, forcing the swap:
+
+       uv pip install torch --index-url <cuda-index-url> --reinstall-package torch
+
+3. Verify:
+
+       python -c "import torch; print(torch.cuda.is_available())"   # expect True
+       python -c "import backend.main"                              # expect no error
+
+The startup log will then show the generation model on `cuda`. This is optional
+and not required to run or develop the project.
