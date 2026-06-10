@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Streaming RAG - developer test page</title>
+  <style>
+    body { font-family: monospace; max-width: 720px; margin: 2rem auto; }
+    #query { width: 100%; font-size: 1.1rem; padding: 0.4rem; }
+    #decision { font-weight: bold; }
+    #answer-box { border: 1px solid #888; padding: 0.5rem; margin-top: 1rem; white-space: pre-wrap; }
+    li { margin-bottom: 0.3rem; }
+  </style>
+</head>
+<body>
+  <h1>Streaming RAG test page</h1>
+  <p>Developer harness, not the real frontend. Type a question about the 2024 Olympics.</p>
+
+  <input id="query" type="text" placeholder="who won the 100m..." autofocus>
+
+  <p>
+    confidence: <span id="confidence">-</span> |
+    decision: <span id="decision">-</span> |
+    top1: <span id="top1">-</span> |
+    top2: <span id="top2">-</span>
+  </p>
+
+  <ol id="results"></ol>
+
+  <div id="answer-box" hidden>
+    <div id="answer-status"></div>
+    <div id="answer"></div>
+    <div id="sources"></div>
+  </div>
+
+  <script>
+    const DEBOUNCE_MS = 150;
+    let debounceTimer = null;
+    let answeredQuery = null; // avoid re-calling /answer for the same text
+
+    const $ = (id) => document.getElementById(id);
+
+    $("query").addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(retrieve, DEBOUNCE_MS);
+    });
+
+    async function retrieve() {
+      const text = $("query").value;
+      const res = await fetch("/retrieve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text, k: 5 }),
+      });
+      const data = await res.json();
+
+      $("confidence").textContent = data.confidence;
+      $("decision").textContent = data.decision;
+      $("top1").textContent = data.top1_score;
+      $("top2").textContent = data.top2_score;
+
+      $("results").innerHTML = "";
+      for (const r of data.results) {
+        const li = document.createElement("li");
+        li.textContent = `${r.score}  ${r.title}  [${r.doc_id}]`;
+        $("results").appendChild(li);
+      }
+
+      if (data.decision === "COMMIT" && data.results.length > 0 && answeredQuery !== text) {
+        answeredQuery = text;
+        await answer(data.query, data.results.map((r) => r.doc_id));
+      }
+    }
+
+    async function answer(query, docIds) {
+      $("answer-box").hidden = false;
+      $("answer-status").textContent = "Generating answer (local model, may take a moment)...";
+      $("answer").textContent = "";
+      $("sources").textContent = "";
+
+      const res = await fetch("/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query, doc_ids: docIds }),
+      });
+      if (!res.ok) {
+        $("answer-status").textContent = "Answer request failed (" + res.status + ")";
+        return;
+      }
+      const data = await res.json();
+      $("answer-status").textContent = "Answer:";
+      $("answer").textContent = data.answer;
+      $("sources").textContent =
+        "Sources: " + data.sources.map((s) => `${s.title} [${s.doc_id}]`).join("; ");
+    }
+  </script>
+</body>
+</html>
