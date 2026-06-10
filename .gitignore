@@ -48,6 +48,12 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 
+# --- Claude Code (personal tooling, not part of the submission) ---
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+BACKEND_SPEC.md
+
 # Note: data/corpus.json is intentionally NOT ignored. It is project data that
 # the backend needs to run, so it should be committed.
 BACKEND_SPEC.md
