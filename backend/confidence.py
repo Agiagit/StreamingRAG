@@ -8,9 +8,9 @@ All tunable numbers live in the constants block below.
 # ---------------------------------------------------------------------------
 # Tunable thresholds (placeholders, to be adjusted by the evaluation WP).
 # ---------------------------------------------------------------------------
-COMMIT_TOP1_THRESHOLD = 0.55   # top1 similarity needed to commit
-COMMIT_MARGIN_THRESHOLD = 0.08  # top1 - top2 margin needed to commit
-SUGGEST_TOP1_THRESHOLD = 0.45  # top1 similarity needed to suggest
+COMMIT_TOP1_THRESHOLD = 0.4   # top1 similarity needed to commit
+COMMIT_MARGIN_THRESHOLD = 0.04  # top1 - top2 margin needed to commit
+SUGGEST_TOP1_THRESHOLD = 0.3  # top1 similarity needed to suggest
 
 # Weights for blending the two signals into a single confidence value.
 # top1 carries most of the weight; the margin tops it up when the best
