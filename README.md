@@ -46,6 +46,18 @@ The project is split into four parts that can be developed in parallel against a
 3. **Evaluation** measuring when the system decides to answer and tuning the thresholds.
 4. **Frontend** the page the user types into, showing live results, confidence, and the answer.
 
+## Work Package 3: Evaluation 
+
+This package evaluated the decision-making logic (`WAIT`, `SUGGEST`, `COMMIT`) of the Streaming RAG system to find the optimal balance between speed and factual accuracy. 
+
+Using a custom Python script (`run_evaluation.py`), we tested the system against various standard and trick questions, comparing two configurations:
+* **Cautious Setting (Threshold 0.55):** Highly accurate, but often waited too long even when the question was complete (`too_late`).
+* **Eager Setting (Threshold 0.40):** Very fast, but easily confused by complex queries, triggering before the full context was clear (`too_early`).
+
+**Results & Recommendation:**
+The visual data analysis (`evaluation_chart.png`) shows that neither extreme is ideal. For a fluid yet accurate user experience, we recommend a balanced middle ground: setting `COMMIT_TOP1_THRESHOLD` to **0.48** and `COMMIT_MARGIN_THRESHOLD` to **0.06**.
+
+
 ## Documentation
 
 The full specification, including the corpus format, the API contract between frontend and backend, and the detailed requirements and definition of done for each work package, is in `sample_and_spec/streaming_rag_spec.md`. Mock API responses for frontend development without a running backend are in `sample_and_spec/sample_responses.json`.
