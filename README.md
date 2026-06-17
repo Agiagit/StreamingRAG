@@ -103,7 +103,7 @@ uvicorn backend.main:app
 
 All confidence weights and WAIT/SUGGEST/COMMIT thresholds live in one place: the constants at the top of `backend/confidence.py`.
 
-##Evaluation and Redommended Settings
+## Evaluation and Redommended Settings
 
 We evaluated the decision-making logic (WAIT, SUGGEST, COMMIT) of the Streaming RAG system to find the optimal balance between speed and factual accuracy.
 
