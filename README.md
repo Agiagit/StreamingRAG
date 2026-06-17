@@ -64,21 +64,23 @@ The first start downloads the two models from Hugging Face (a few hundred MB); a
 
 Open `http://127.0.0.1:8000` for the radar visualization: type a question, watch blips appear as articles are retrieved, and see the answer appear automatically when the system commits. The developer debug page is at `http://127.0.0.1:8000/debug.html`.
 
-##Building the corpus
+## Building the corpus
 
 The corpus is built from Wikipedia articles by build_corpus.py, which downloads a set of articles across three topics (2024 Paris Olympics, history of music, and space exploration), splits long articles into overlapping chunks, and writes the result to data/corpus.json in the frozen corpus format. It also writes data/example_questions.txt with sample queries the corpus should and should not be able to answer.
 
 This is a build-time step only. You do not need to run it to run the project; the backend reads the finished data/corpus.json. Run it only when you want to regenerate or extend the corpus.
 
-###Dependency
+### Dependency
 
 The script needs the wikipedia-api package, which is not part of the runtime requirements because the backend never imports it. Install it on its own before building:
 
-bashuv pip install wikipedia-api
+```bash
+uv pip install wikipedia-api
+```
 
 Note the name mismatch: the package is installed as wikipedia-api (with a hyphen) but imported in the script as wikipediaapi (one word). This is normal for this package and not a typo.
 
-###Usage
+### Usage
 
 From the project root, with the virtual environment active:
 
