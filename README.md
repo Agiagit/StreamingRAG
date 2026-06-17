@@ -2,11 +2,7 @@
 
 A live, predictive retrieval system based on RAG: as the user types, the system continuously searches the document collection and, once it is confident enough, answers before the user finishes.
 
-This is a group final project for our Machine Learning course. It builds on our earlier work: a small GPT trained from scratch and a basic Retrieval-Augmented Generation (RAG) prototype.
-
-## What makes it different
-
-Standard RAG is request and response: you type a full question, press Enter, and then it retrieves and answers. This system does the retrieval continuously, on every keystroke, and decides on its own when it has seen enough to answer. The novel part is the timing of the answer, not the retrieval itself.
+While standard RAG is request and response - you type a full question, press Enter, and then it retrieves and answers - this system does the retrieval continuously, on every keystroke, and decides on its own when it has seen enough to answer.
 
 ## How it works
 
@@ -21,10 +17,8 @@ The retrieval and the decision use only a small embedding model and simple math,
 ```
 streaming_rag/
 ├── backend/            FastAPI app: retrieval, confidence, generation
-├── frontend/           the web interface (served by the backend)
 ├── data/
 │   └── corpus.json     the document collection (chunked articles)
-├── evaluation/         tests and tuning for the commit decision
 ├── requirements.txt    shared Python dependencies
 └── README.md
 ```
@@ -70,7 +64,31 @@ The first start downloads the two models from Hugging Face (a few hundred MB); a
 
 Open `http://127.0.0.1:8000` for the radar visualization: type a question, watch blips appear as articles are retrieved, and see the answer appear automatically when the system commits. The developer debug page is at `http://127.0.0.1:8000/debug.html`.
 
-### Corpus selection
+##Building the corpus
+
+The corpus is built from Wikipedia articles by build_corpus.py, which downloads a set of articles across three topics (2024 Paris Olympics, history of music, and space exploration), splits long articles into overlapping chunks, and writes the result to data/corpus.json in the frozen corpus format. It also writes data/example_questions.txt with sample queries the corpus should and should not be able to answer.
+
+This is a build-time step only. You do not need to run it to run the project; the backend reads the finished data/corpus.json. Run it only when you want to regenerate or extend the corpus.
+
+###Dependency
+
+The script needs the wikipedia-api package, which is not part of the runtime requirements because the backend never imports it. Install it on its own before building:
+
+bashuv pip install wikipedia-api
+
+Note the name mismatch: the package is installed as wikipedia-api (with a hyphen) but imported in the script as wikipediaapi (one word). This is normal for this package and not a typo.
+
+###Usage
+
+From the project root, with the virtual environment active:
+
+bashuv pip install wikipedia-api      # once, if not already installed
+python build_corpus.py            # writes data/corpus.json
+python validate_corpus.py data/corpus.json   # confirm the output matches the format
+
+Every entry in the generated corpus has a text field between 200 and 1500 characters, the five required fields (id, title, parent_title, source, text), and a unique id. Run validate_corpus.py after building to confirm; if it reports problems, fix the listed entries before using the corpus with the backend.
+
+## Corpus selection
 
 The backend defaults to `data/corpus.json`. To use a different corpus, set the `CORPUS_PATH` environment variable or edit the default in `backend/retrieval.py`:
 
@@ -83,12 +101,16 @@ uvicorn backend.main:app
 
 All confidence weights and WAIT/SUGGEST/COMMIT thresholds live in one place: the constants at the top of `backend/confidence.py`.
 
-## Status
+##Evaluation and Redommended Settings
 
-- **Backend (WP1):** Complete. Retrieval deduplicates by article so confidence scores reflect the gap between distinct sources. Answer generation expands committed articles with sibling chunks for better grounding. Thresholds tuned against the full corpus.
-- **Corpus (WP2):** Complete. Full chunked corpus at `data/corpus.json` (2 737 chunks across 96 articles, covering three topic domains).
-- **Evaluation (WP3):** Complete.
-- **Frontend (WP4):** The separate frontend work package was dropped. The radar visualization (`backend/static/index.html`) serves as the project frontend and is actively maintained. The old developer test harness remains available at `/debug.html`.
+We evaluated the decision-making logic (WAIT, SUGGEST, COMMIT) of the Streaming RAG system to find the optimal balance between speed and factual accuracy.
+
+Using a custom Python script (run_evaluation.py), we tested the system against various standard and trick questions, comparing two configurations:
+
+    Cautious Setting (Threshold 0.55): Highly accurate, but often waited too long even when the question was complete (too_late).
+    Eager Setting (Threshold 0.40): Very fast, but easily confused by complex queries, triggering before the full context was clear (too_early).
+
+Results & Recommendation: The visual data analysis (evaluation_chart.png) shows that neither extreme is ideal. For a fluid yet accurate user experience, we recommend a balanced middle ground: setting COMMIT_TOP1_THRESHOLD to 0.48 and COMMIT_MARGIN_THRESHOLD to 0.06.
 
 ## Optional: GPU acceleration (NVIDIA)
 
