@@ -90,7 +90,7 @@ def retrieve(req: RetrieveRequest) -> dict:
 @app.post("/answer")
 def answer(req: AnswerRequest) -> dict:
     retriever: Retriever = state["retriever"]
-    entries = retriever.get_entries(req.doc_ids)
+    entries = retriever.get_entries_with_siblings(req.doc_ids)
     if not entries:
         raise HTTPException(status_code=400, detail="No known doc_ids provided")
 

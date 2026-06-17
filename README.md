@@ -68,14 +68,14 @@ uvicorn backend.main:app
 
 The first start downloads the two models from Hugging Face (a few hundred MB); after that everything runs locally and offline. When startup finishes, the log shows which corpus file was loaded and how many entries it contains.
 
-Open `http://127.0.0.1:8000` for the developer test page: type a question about the 2024 Olympics, watch the live results and confidence, and on `COMMIT` the locally generated answer appears.
+Open `http://127.0.0.1:8000` for the radar visualization: type a question, watch blips appear as articles are retrieved, and see the answer appear automatically when the system commits. The developer debug page is at `http://127.0.0.1:8000/debug.html`.
 
 ### Corpus selection
 
-The backend defaults to the bundled sample corpus at `data/sample_corpus.json`. To use a different corpus, either set the `CORPUS_PATH` environment variable or change the default in `backend/retrieval.py`:
+The backend defaults to `data/corpus.json`. To use a different corpus, set the `CORPUS_PATH` environment variable or edit the default in `backend/retrieval.py`:
 
 ```
-set CORPUS_PATH=data/corpus.json   # Windows
+set CORPUS_PATH=path\to\other_corpus.json   # Windows
 uvicorn backend.main:app
 ```
 
@@ -85,7 +85,10 @@ All confidence weights and WAIT/SUGGEST/COMMIT thresholds live in one place: the
 
 ## Status
 
-Backend (work package 1) implemented, including the sample corpus and a developer test page. Corpus pipeline, evaluation and the real frontend are in progress.
+- **Backend (WP1):** Complete. Retrieval deduplicates by article so confidence scores reflect the gap between distinct sources. Answer generation expands committed articles with sibling chunks for better grounding. Thresholds tuned against the full corpus.
+- **Corpus (WP2):** Complete. Full chunked corpus at `data/corpus.json` (2 737 chunks across 96 articles, covering three topic domains).
+- **Evaluation (WP3):** Complete.
+- **Frontend (WP4):** The separate frontend work package was dropped. The radar visualization (`backend/static/index.html`) serves as the project frontend and is actively maintained. The old developer test harness remains available at `/debug.html`.
 
 ## Optional: GPU acceleration (NVIDIA)
 

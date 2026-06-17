@@ -1,97 +1,408 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Streaming RAG - developer test page</title>
-  <style>
-    body { font-family: monospace; max-width: 720px; margin: 2rem auto; }
-    #query { width: 100%; font-size: 1.1rem; padding: 0.4rem; }
-    #decision { font-weight: bold; }
-    #answer-box { border: 1px solid #888; padding: 0.5rem; margin-top: 1rem; white-space: pre-wrap; }
-    li { margin-bottom: 0.3rem; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Streaming RAG — Semantic Radar</title>
+<style>
+  :root {
+    --bg: #07090f;
+    --bg2: #0c1018;
+    --grid: rgba(86, 173, 178, 0.18);
+    --grid-strong: rgba(86, 173, 178, 0.34);
+    --blip: #5fd0c4;
+    --blip-dim: rgba(95, 208, 196, 0.55);
+    --lock: #f5c451;
+    --ink: #e8eef0;
+    --ink-soft: #8aa0a3;
+    --wait: #5b7186;
+    --suggest: #e0a23c;
+    --commit: #46c98a;
+    --line: rgba(95, 208, 196, 0.30);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .mono { font-family: "JetBrains Mono", "SF Mono", "Consolas", monospace; }
+
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  /* Query input: top-center */
+  #bar {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%);
+    width: min(620px, 80vw); z-index: 5;
+  }
+  #q {
+    width: 100%; padding: 14px 18px; font-size: 17px;
+    background: rgba(12, 16, 24, 0.82); color: var(--ink);
+    border: 1px solid var(--grid-strong); border-radius: 10px;
+    outline: none; backdrop-filter: blur(6px);
+  }
+  #q:focus { border-color: var(--blip); }
+  #q::placeholder { color: var(--ink-soft); }
+
+  /* HUD: confidence + decision, top-left */
+  #hud { position: fixed; top: 22px; left: 22px; z-index: 5; width: 190px; }
+  .label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 6px; }
+  #conf-track { height: 8px; background: rgba(255,255,255,0.06);
+    border-radius: 4px; overflow: hidden; }
+  #conf-fill { height: 100%; width: 0%; background: var(--wait);
+    transition: width 0.12s linear, background 0.2s; }
+  #conf-val { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  #decision { margin-top: 18px; font-size: 22px; font-weight: 600;
+    letter-spacing: 0.04em; color: var(--wait); transition: color 0.2s; }
+  #decision-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* Retrieved articles panel, top-right */
+  #article-panel {
+    position: fixed; top: 22px; right: 22px; z-index: 5; width: 220px;
+  }
+  #article-list {
+    list-style: none; margin: 8px 0 0; padding: 0;
+  }
+  #article-list li {
+    display: flex; align-items: baseline; gap: 6px;
+    padding: 5px 0; border-bottom: 1px solid var(--grid);
+    font-size: 11px; color: var(--ink-soft);
+    transition: color 0.2s;
+  }
+  #article-list li.top { color: var(--ink); }
+  #article-list li .rank {
+    font-size: 10px; color: var(--ink-soft); min-width: 14px;
+    font-family: "JetBrains Mono","Consolas",monospace;
+  }
+  #article-list li .art-name {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #article-list li .art-score {
+    font-family: "JetBrains Mono","Consolas",monospace;
+    color: var(--blip); font-size: 11px;
+  }
+  #article-list li.top .art-score { color: var(--lock); }
+
+  /* Answer panel, bottom */
+  #answer {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
+    width: min(680px, 92vw); z-index: 5;
+    background: rgba(12, 16, 24, 0.92); border: 1px solid var(--lock);
+    border-radius: 12px; padding: 18px 20px; opacity: 0;
+    transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+  #answer.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #answer .label { color: var(--lock); }
+  #answer-text { font-size: 15px; line-height: 1.5; margin: 8px 0 0; }
+  #answer-src { font-size: 11px; color: var(--ink-soft); margin-top: 12px; }
+  #answer-src span { color: var(--blip); }
+
+  .hint { position: fixed; bottom: 22px; left: 22px; z-index: 4;
+    font-size: 11px; color: var(--ink-soft); max-width: 200px; line-height: 1.5; }
+</style>
 </head>
 <body>
-  <h1>Streaming RAG test page</h1>
-  <p>Developer harness, not the real frontend. Type a question about the 2024 Olympics.</p>
+  <div id="stage"><canvas id="c"></canvas></div>
 
-  <input id="query" type="text" placeholder="who won the 100m..." autofocus>
-
-  <p>
-    confidence: <span id="confidence">-</span> |
-    decision: <span id="decision">-</span> |
-    top1: <span id="top1">-</span> |
-    top2: <span id="top2">-</span>
-  </p>
-
-  <ol id="results"></ol>
-
-  <div id="answer-box" hidden>
-    <div id="answer-status"></div>
-    <div id="answer"></div>
-    <div id="sources"></div>
+  <div id="bar">
+    <input id="q" autocomplete="off" spellcheck="false"
+           placeholder="Start typing a question — the radar searches as you go">
   </div>
 
-  <script>
-    const DEBOUNCE_MS = 150;
-    let debounceTimer = null;
-    let answeredQuery = null; // avoid re-calling /answer for the same text
+  <div id="hud">
+    <div class="label">Confidence</div>
+    <div id="conf-track"><div id="conf-fill"></div></div>
+    <div id="conf-val" class="mono">0.00</div>
+    <div id="decision" class="mono">WAIT</div>
+    <div id="decision-sub">listening</div>
+  </div>
 
-    const $ = (id) => document.getElementById(id);
+  <div id="article-panel">
+    <div class="label">Retrieved articles</div>
+    <ul id="article-list"></ul>
+  </div>
 
-    $("query").addEventListener("input", () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(retrieve, DEBOUNCE_MS);
+  <div id="answer">
+    <div class="label">Answer</div>
+    <p id="answer-text"></p>
+    <div id="answer-src"></div>
+  </div>
+
+  <div class="hint">Each blip is a distinct article. Distance from center = relevance. Gold = committed.</div>
+
+<script>
+const API = "";
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const qEl = document.getElementById("q");
+const confFill = document.getElementById("conf-fill");
+const confVal = document.getElementById("conf-val");
+const decisionEl = document.getElementById("decision");
+const decisionSub = document.getElementById("decision-sub");
+const answerEl = document.getElementById("answer");
+const answerText = document.getElementById("answer-text");
+const answerSrc = document.getElementById("answer-src");
+const articleList = document.getElementById("article-list");
+
+const DECISION_COLOR = { WAIT: "--wait", SUGGEST: "--suggest", COMMIT: "--commit" };
+const DECISION_SUB = { WAIT: "listening", SUGGEST: "forming a guess", COMMIT: "locked on" };
+
+const S_MIN = 0.15, S_MAX = 0.65;
+function scoreToRadiusFactor(s) {
+  const f = Math.max(0, Math.min(1, (s - S_MIN) / (S_MAX - S_MIN)));
+  return 1 - f;
+}
+function angleFor(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return (h % 3600) / 3600 * Math.PI * 2;
+}
+
+// blips: doc_id -> {title, parent, score, angle, r, alpha, present, rank}
+const blips = new Map();
+let confidence = 0, decision = "WAIT", topId = null, sweep = 0;
+// lastAnsweredText: the query text we most recently committed to /answer.
+// null means no answer has been triggered yet for the current session.
+let lastAnsweredText = null;
+let retrieveCtl = null, answerCtl = null;
+let retrieveDebounce = null, answerDebounce = null;
+
+function sizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", sizeCanvas);
+sizeCanvas();
+
+qEl.addEventListener("input", () => {
+  clearTimeout(retrieveDebounce);
+  // Do NOT hide the answer here. retrieve() will decide based on the new
+  // decision value: hide only if we drop below COMMIT, keep/refresh if COMMIT.
+  retrieveDebounce = setTimeout(retrieve, 150);
+});
+
+async function retrieve() {
+  const text = qEl.value.trim();
+  if (retrieveCtl) retrieveCtl.abort();
+  if (!text) { clearField(); return; }
+  retrieveCtl = new AbortController();
+  let data;
+  try {
+    const r = await fetch(API + "/retrieve", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, k: 8 }), signal: retrieveCtl.signal,
     });
+    data = await r.json();
+  } catch (e) { return; }
 
-    async function retrieve() {
-      const text = $("query").value;
-      const res = await fetch("/retrieve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text, k: 5 }),
-      });
-      const data = await res.json();
+  confidence = data.confidence ?? 0;
+  decision = data.decision || "WAIT";
+  const results = data.results || [];
+  topId = results.length ? results[0].doc_id : null;
 
-      $("confidence").textContent = data.confidence;
-      $("decision").textContent = data.decision;
-      $("top1").textContent = data.top1_score;
-      $("top2").textContent = data.top2_score;
-
-      $("results").innerHTML = "";
-      for (const r of data.results) {
-        const li = document.createElement("li");
-        li.textContent = `${r.score}  ${r.title}  [${r.doc_id}]`;
-        $("results").appendChild(li);
-      }
-
-      if (data.decision === "COMMIT" && data.results.length > 0 && answeredQuery !== text) {
-        answeredQuery = text;
-        await answer(data.query, data.results.map((r) => r.doc_id));
-      }
+  for (const b of blips.values()) b.present = false;
+  results.forEach((res, i) => {
+    let b = blips.get(res.doc_id);
+    if (!b) {
+      b = { angle: angleFor(res.doc_id), r: 1, alpha: 0 };
+      blips.set(res.doc_id, b);
     }
+    b.title = res.title; b.parent = res.parent_title || res.title;
+    b.score = res.score; b.rank = i; b.present = true;
+  });
 
-    async function answer(query, docIds) {
-      $("answer-box").hidden = false;
-      $("answer-status").textContent = "Generating answer (local model, may take a moment)...";
-      $("answer").textContent = "";
-      $("sources").textContent = "";
+  updateHud();
+  updateArticleList(results);
 
-      const res = await fetch("/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: query, doc_ids: docIds }),
-      });
-      if (!res.ok) {
-        $("answer-status").textContent = "Answer request failed (" + res.status + ")";
-        return;
-      }
-      const data = await res.json();
-      $("answer-status").textContent = "Answer:";
-      $("answer").textContent = data.answer;
-      $("sources").textContent =
-        "Sources: " + data.sources.map((s) => `${s.title} [${s.doc_id}]`).join("; ");
+  if (decision === "COMMIT") {
+    // Keep any existing answer visible while still committed.
+    // If the committed text changed, schedule a re-answer (debounced so
+    // fast typing doesn't hammer /answer on every keystroke).
+    if (text !== lastAnsweredText) {
+      clearTimeout(answerDebounce);
+      // Fire immediately on the first commit; debounce refinements.
+      const delay = lastAnsweredText === null ? 0 : 600;
+      const docIds = results.slice(0, 4).map(r => r.doc_id);
+      answerDebounce = setTimeout(() => {
+        lastAnsweredText = text;
+        answer(text, docIds);
+      }, delay);
     }
-  </script>
+  } else {
+    // Dropped below COMMIT: clear the answer panel and any pending re-answer.
+    clearTimeout(answerDebounce);
+    if (answerEl.classList.contains("show")) {
+      answerEl.classList.remove("show");
+      if (answerCtl) { answerCtl.abort(); answerCtl = null; }
+    }
+    lastAnsweredText = null;
+  }
+}
+
+async function answer(query, docIds) {
+  // Cancel any in-flight /answer so a stale response cannot overwrite a newer one.
+  if (answerCtl) answerCtl.abort();
+  answerCtl = new AbortController();
+  answerText.textContent = "...";
+  answerSrc.innerHTML = "";
+  answerEl.classList.add("show");
+  try {
+    const r = await fetch(API + "/answer", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, doc_ids: docIds }), signal: answerCtl.signal,
+    });
+    const data = await r.json();
+    answerText.textContent = data.answer || "(no answer)";
+    const srcs = (data.sources || []).map(s => s.title).filter(Boolean);
+    answerSrc.innerHTML = srcs.length
+      ? "Sources: " + srcs.map(s => `<span>${escapeHtml(s)}</span>`).join(", ")
+      : "";
+  } catch (e) { /* aborted by newer /answer request; leave existing text */ }
+}
+
+function clearField() {
+  for (const b of blips.values()) b.present = false;
+  confidence = 0; decision = "WAIT"; topId = null;
+  lastAnsweredText = null;
+  clearTimeout(answerDebounce);
+  answerEl.classList.remove("show");
+  if (answerCtl) { answerCtl.abort(); answerCtl = null; }
+  articleList.innerHTML = "";
+  updateHud();
+}
+
+function updateHud() {
+  confFill.style.width = Math.round(confidence * 100) + "%";
+  const col = getCSS(DECISION_COLOR[decision] || "--wait");
+  confFill.style.background = col;
+  confVal.textContent = confidence.toFixed(2);
+  decisionEl.textContent = decision;
+  decisionEl.style.color = col;
+  decisionSub.textContent = DECISION_SUB[decision] || "";
+}
+
+function updateArticleList(results) {
+  if (!results.length) { articleList.innerHTML = ""; return; }
+  articleList.innerHTML = results.map((res, i) => {
+    const name = truncate(res.parent_title || res.title, 22);
+    return `<li class="${i === 0 ? "top" : ""}">
+      <span class="rank">${i + 1}.</span>
+      <span class="art-name">${escapeHtml(name)}</span>
+      <span class="art-score">${res.score.toFixed(2)}</span>
+    </li>`;
+  }).join("");
+}
+
+function getCSS(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+function truncate(s, n) { return s && s.length > n ? s.slice(0, n - 1) + "…" : (s || ""); }
+function hexA(hex, a) {
+  const m = hex.replace("#", "");
+  const r = parseInt(m.substring(0, 2), 16), g = parseInt(m.substring(2, 4), 16), b = parseInt(m.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ---- Animation loop ----
+function draw() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const cx = w / 2, cy = h / 2;
+  const maxR = Math.min(cx, cy) - 70;
+  const innerPad = 46;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Radar rings
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, (maxR / 4) * i, 0, Math.PI * 2);
+    ctx.strokeStyle = i === 4 ? getCSS("--grid-strong") : getCSS("--grid");
+    ctx.stroke();
+  }
+  // Cross hairs
+  ctx.strokeStyle = getCSS("--grid");
+  ctx.beginPath();
+  ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy);
+  ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR);
+  ctx.stroke();
+
+  // Sweep line
+  sweep += 0.012;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(sweep);
+  const g = ctx.createLinearGradient(0, 0, maxR, 0);
+  g.addColorStop(0, "rgba(95,208,196,0.16)");
+  g.addColorStop(1, "rgba(95,208,196,0)");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(maxR, 0); ctx.stroke();
+  ctx.restore();
+
+  // Blips
+  const committed = decision === "COMMIT";
+  for (const [id, b] of blips.entries()) {
+    const targetAlpha = b.present ? 1 : 0;
+    b.alpha += (targetAlpha - b.alpha) * 0.12;
+    const targetR = b.present
+      ? innerPad + (maxR - innerPad) * scoreToRadiusFactor(b.score)
+      : maxR + 30;
+    b.r += (targetR - b.r) * 0.12;
+    if (!b.present && b.alpha < 0.02) { blips.delete(id); continue; }
+
+    const x = cx + Math.cos(b.angle) * b.r;
+    const y = cy + Math.sin(b.angle) * b.r;
+    const isTop = id === topId;
+
+    ctx.strokeStyle = isTop && committed
+      ? `rgba(245,196,81,${0.8 * b.alpha})`
+      : `rgba(95,208,196,${0.28 * b.alpha})`;
+    ctx.lineWidth = isTop && committed ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+
+    const baseSize = 3 + (b.score || 0) * 7;
+    const pulse = (isTop && committed) ? 1 + 0.25 * Math.sin(Date.now() / 180) : 1;
+    const size = baseSize * pulse;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    if (isTop && committed) {
+      ctx.fillStyle = `rgba(245,196,81,${b.alpha})`;
+      ctx.shadowColor = "rgba(245,196,81,0.9)"; ctx.shadowBlur = 18;
+    } else {
+      ctx.fillStyle = `rgba(95,208,196,${0.85 * b.alpha})`;
+      ctx.shadowColor = "rgba(95,208,196,0.5)"; ctx.shadowBlur = isTop ? 10 : 4;
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    if (b.alpha > 0.5 && (b.rank < 4 || isTop)) {
+      ctx.fillStyle = `rgba(232,238,240,${0.75 * b.alpha})`;
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText(truncate(b.parent, 26), x + size + 5, y + 3);
+    }
+  }
+
+  // Center query node
+  const col = getCSS(DECISION_COLOR[decision] || "--wait");
+  const centerPulse = 4 + 2 * Math.sin(Date.now() / 400);
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7 + centerPulse, 0, Math.PI * 2);
+  ctx.fillStyle = hexA(col, 0.18); ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = col; ctx.fill();
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+qEl.focus();
+</script>
 </body>
 </html>

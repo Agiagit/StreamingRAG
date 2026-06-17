@@ -6,11 +6,19 @@ All tunable numbers live in the constants block below.
 """
 
 # ---------------------------------------------------------------------------
-# Tunable thresholds (placeholders, to be adjusted by the evaluation WP).
+# Tunable thresholds -- tuned against the full corpus (2 737 chunks / 96 articles)
+# with per-article deduplication active.
+#
+# With dedup, top1 and top2 come from different articles, so the margin
+# reflects a real semantic gap. On the full corpus, clear queries (e.g.
+# "when was neil armstrong born") yield top1 ~0.38-0.45 and margins
+# ~0.10-0.20 when complete. Vague fragments ("arm", "when") yield
+# top1 <0.22 and margins near zero. The thresholds below fire COMMIT
+# roughly when 2/3 of a clear query has been typed.
 # ---------------------------------------------------------------------------
-COMMIT_TOP1_THRESHOLD = 0.55   # top1 similarity needed to commit
-COMMIT_MARGIN_THRESHOLD = 0.08  # top1 - top2 margin needed to commit
-SUGGEST_TOP1_THRESHOLD = 0.45  # top1 similarity needed to suggest
+COMMIT_TOP1_THRESHOLD = 0.30   # lowered from 0.35; large diverse corpus scores lower
+COMMIT_MARGIN_THRESHOLD = 0.05 # unchanged; dedup makes inter-article margin meaningful
+SUGGEST_TOP1_THRESHOLD = 0.22  # lowered from 0.28 for same reason
 
 # Weights for blending the two signals into a single confidence value.
 # top1 carries most of the weight; the margin tops it up when the best

@@ -1,0 +1,28 @@
+Example questions — Olympics + Music + Space corpus
+====================================================
+
+-- Questions the corpus SHOULD answer --
+
+01. Where were the 2024 Summer Olympics held?
+02. Which country topped the 2024 Olympics medal table?
+03. Who won the men's 100 metres at the 2024 Olympics?
+04. Who won the women's gymnastics all-around at Paris 2024?
+05. Which new sport made its debut at the 2024 Olympics?
+06. Who won gold in basketball at the 2024 Olympics?
+07. When did jazz originate?
+08. What are the main characteristics of baroque music?
+09. Who invented rock and roll?
+10. What is the origin of reggae music?
+11. Which country does bossa nova come from?
+12. What albums made Michael Jackson famous?
+13. Who was the first human to walk on the Moon?
+14. What is the James Webb Space Telescope used for?
+15. How long has the International Space Station been in orbit?
+16. What did the Perseverance rover discover on Mars?
+17. Who founded SpaceX?
+18. What was the first artificial satellite ever launched?
+
+-- Questions the corpus should NOT answer (no info in corpus) --
+
+19. Who won the 2026 FIFA World Cup?
+20. What is the population of Mars?
