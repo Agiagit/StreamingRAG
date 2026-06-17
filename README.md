@@ -107,7 +107,7 @@ All confidence weights and WAIT/SUGGEST/COMMIT thresholds live in one place: the
 
 We evaluated the decision-making logic (WAIT, SUGGEST, COMMIT) of the Streaming RAG system to find the optimal balance between speed and factual accuracy.
 
-Using a custom Python script (run_evaluation.py), we tested the system against various standard and trick questions, comparing two configurations:
+Using a custom Python script (run_evaluation.py, evaluation branch), we tested the system against various standard and trick questions, comparing two configurations:
 
     Cautious Setting (Threshold 0.55): Highly accurate, but often waited too long even when the question was complete (too_late).
     Eager Setting (Threshold 0.40): Very fast, but easily confused by complex queries, triggering before the full context was clear (too_early).
