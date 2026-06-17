@@ -12,6 +12,8 @@ While standard RAG is request and response - you type a full question, press Ent
 
 The retrieval and the decision use only a small embedding model and simple math, so they are quick and run anywhere. Only the final answer step uses a language model, and it runs once per committed query.
 
+<img width="1408" height="768" alt="StreamingRag_Gemini_Generated_Image" src="https://github.com/user-attachments/assets/3bed8a14-0ea9-408e-b530-38170c6a20aa" />
+
 ## Project structure
 
 ```
